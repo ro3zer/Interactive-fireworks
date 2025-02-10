@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive fireworks</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        body {
+            background: #000;
+        }
+        canvas {
+            display: block;
+        }
+        #controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-family: Arial, sans-serif;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 15px;
+            margin: 2px;
+            border: none;
+            border-radius: 4px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button.active {
+            background: #ff4444;
+            box-shadow: 0 0 10px #ff4444;
+        }
+        .explosion-controls {
+            display: flex;
+            gap: 5px;
+            margin: 10px 0;
+        }
+        .color-controls {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .color-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid white;
+            cursor: pointer;
+        }
+        #currentPattern {
+            color: #fff;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+        <div>
+            <button id="gravityBtn">Change Gravity</button>
+            <button id="rainbowBtn">Rainbow Mode</button>
+        </div>
+        <div class="explosion-controls">
+            <button id="circleExplosion" class="active">Circle</button>
+            <button id="spiralExplosion">Spiral</button>
+            <button id="heartExplosion">Heart</button>
+            <button id="starExplosion">Star</button>
+        </div>
+        <div id="currentPattern">Current: Circle Explosion</div>
+        <div class="color-controls">
+            <div class="color-btn" style="background: #ff0000" data-color="0"></div>
+            <div class="color-btn" style="background: #00ff00" data-color="120"></div>
+            <div class="color-btn" style="background: #0000ff" data-color="240"></div>
+            <div class="color-btn" style="background: #ff00ff" data-color="300"></div>
+            <div class="color-btn" style="background: #ffff00" data-color="60"></div>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const currentPatternDisplay = document.getElementById('currentPattern');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        class Particle {
+            constructor(x, y, vx, vy, hue, size = null) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.alpha = 1;
+                this.size = size || Math.random() * 4 + 2;
+                this.hue = hue || currentHue;
+                this.saturation = 100;
+                this.brightness = 50;
+                this.drag = 0.98;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                if (useGravity) {
+                    this.vy += 0.2;
+                }
+
+                this.vx *= this.drag;
+                this.vy *= this.drag;
+
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -0.8;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -0.8;
+
+                this.alpha -= 0.005;
+                this.size *= 0.99;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${this.hue}, ${this.saturation}%, ${this.brightness}%, ${this.alpha})`;
+                ctx.fill();
+            }
+        }
+
+        let particles = [];
+        let useGravity = false;
+        let currentHue = 0;
+        let isRainbowMode = false;
+        let currentExplosionType = 'circle';
+
+        function createParticles(x, y, count, hue) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5;
+                particles.push(new Particle(
+                    x, y,
+                    Math.cos(angle) * speed,
+                    Math.sin(angle) * speed,
+                    isRainbowMode ? Math.random() * 360 : hue
+                ));
+            }
+        }
+
+        function createCircleExplosion(x, y) {
+            for (let i = 0; i < 150; i++) {
+                const angle = (i / 75) * Math.PI * 2;
+                const speed = Math.random() * 15 + 5;
+                particles.push(new Particle(
+                    x, y,
+                    Math.cos(angle) * speed,
+                    Math.sin(angle) * speed,
+                    isRainbowMode ? Math.random() * 360 : currentHue,
+                    5
+                ));
+            }
+        }
+
+        function createSpiralExplosion(x, y) {
+            for (let i = 0; i < 200; i++) {
+                const angle = (i / 15) * Math.PI * 2;
+                const speed = (i / 10) + 5;
+                const particle = new Particle(
+                    x, y,
+                    Math.cos(angle) * speed,
+                    Math.sin(angle) * speed,
+                    isRainbowMode ? (i * 2) % 360 : currentHue,
+                    4
+                );
+                particle.drag = 0.99;
+                particles.push(particle);
+            }
+        }
+
+        function createHeartExplosion(x, y) {
+            for (let i = 0; i < 200; i++) {
+                const angle = (i / 100) * Math.PI * 2;
+                const radiusNoise = Math.random() * 0.5 + 0.5;
+                const t = angle;
+                const heartX = 16 * Math.pow(Math.sin(t), 3);
+                const heartY = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+                const speed = 2;
+                particles.push(new Particle(
+                    x, y,
+                    heartX * speed * radiusNoise,
+                    heartY * speed * radiusNoise,
+                    isRainbowMode ? Math.random() * 360 : currentHue,
+                    6
+                ));
+            }
+        }
+
+        function createStarExplosion(x, y) {
+            for (let i = 0; i < 200; i++) {
+                const angle = (i / 40) * Math.PI * 2;
+                const radius = Math.sin(angle * 5) * 10 + 5;
+                const speed = radius;
+                particles.push(new Particle(
+                    x, y,
+                    Math.cos(angle) * speed,
+                    Math.sin(angle) * speed,
+                    isRainbowMode ? Math.random() * 360 : currentHue,
+                    3
+                ));
+            }
+        }
+
+        function explode(x, y) {
+            switch(currentExplosionType) {
+                case 'circle':
+                    createCircleExplosion(x, y);
+                    break;
+                case 'spiral':
+                    createSpiralExplosion(x, y);
+                    break;
+                case 'heart':
+                    createHeartExplosion(x, y);
+                    break;
+                case 'star':
+                    createStarExplosion(x, y);
+                    break;
+            }
+        }
+
+        canvas.addEventListener('mousemove', (e) => {
+            createParticles(e.clientX, e.clientY, 2, currentHue);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            createParticles(touch.clientX, touch.clientY, 2, currentHue);
+        });
+
+        canvas.addEventListener('click', (e) => {
+            explode(e.clientX, e.clientY);
+        });
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles = particles.filter(p => p.alpha > 0);
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            if (isRainbowMode) {
+                currentHue = (currentHue + 1) % 360;
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        // Controls
+        function updateExplosionButtons() {
+            document.querySelectorAll('.explosion-controls button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`${currentExplosionType}Explosion`).classList.add('active');
+            currentPatternDisplay.textContent = `Current: ${currentExplosionType.charAt(0).toUpperCase() + currentExplosionType.slice(1)} Explosion`;
+        }
+
+        document.getElementById('gravityBtn').addEventListener('click', () => {
+            useGravity = !useGravity;
+            document.getElementById('gravityBtn').classList.toggle('active');
+        });
+
+        document.getElementById('rainbowBtn').addEventListener('click', () => {
+            isRainbowMode = !isRainbowMode;
+            document.getElementById('rainbowBtn').classList.toggle('active');
+        });
+
+        ['circle', 'spiral', 'heart', 'star'].forEach(type => {
+            document.getElementById(`${type}Explosion`).addEventListener('click', () => {
+                currentExplosionType = type;
+                updateExplosionButtons();
+                explode(canvas.width/2, canvas.height/2); // 즉시 데모 효과 표시
+            });
+        });
+
+        document.querySelectorAll('.color-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                isRainbowMode = false;
+                document.getElementById('rainbowBtn').classList.remove('active');
+                currentHue = parseInt(btn.dataset.color);
+                explode(canvas.width/2, canvas.height/2); // 색상 변경 시 데모 효과
+            });
+        });
+
+        animate();
+    </script>
+</body>
+</html>
