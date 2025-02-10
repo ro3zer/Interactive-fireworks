@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" >
+        <animate attributeName="stop-color" 
+          values="#4F46E5; #EC4899; #4F46E5"
+          dur="4s" repeatCount="indefinite" />
+      </stop>
+      <stop offset="100%" style="stop-color:#EC4899;stop-opacity:1" >
+        <animate attributeName="stop-color" 
+          values="#EC4899; #4F46E5; #EC4899"
+          dur="4s" repeatCount="indefinite" />
+      </stop>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Main Text -->
+  <text x="50%" y="50%" 
+    text-anchor="middle" 
+    dominant-baseline="middle"
+    font-family="Arial, sans-serif" 
+    font-size="48" 
+    font-weight="bold" 
+    fill="url(#gradient)"
+    filter="url(#glow)">
+      RO3ZER
+    <animate 
+      attributeName="opacity"
+      values="0.8;1;0.8"
+      dur="2s"
+      repeatCount="indefinite" />
+  </text>
+
+  <!-- Decorative Lines -->
+  <path d="M100,80 L300,80" 
+    stroke="url(#gradient)" 
+    stroke-width="2"
+    stroke-linecap="round">
+    <animate 
+      attributeName="d" 
+      values="M100,80 L300,80;M80,80 L320,80;M100,80 L300,80" 
+      dur="3s" 
+      repeatCount="indefinite" />
+  </path>
+
+  <!-- Animated Circles -->
+  <circle cx="150" cy="80" r="4" fill="url(#gradient)">
+    <animate 
+      attributeName="cx" 
+      values="150;160;150" 
+      dur="2s" 
+      repeatCount="indefinite" />
+  </circle>
+  <circle cx="250" cy="80" r="4" fill="url(#gradient)">
+    <animate 
+      attributeName="cx" 
+      values="250;240;250" 
+      dur="2s" 
+      repeatCount="indefinite" />
+  </circle>
+</svg>
